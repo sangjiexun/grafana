@@ -18,7 +18,7 @@ var testUser = &models.SignedInUser{
 	Email:   "testuser@example.org",
 }
 
-func Test_resolveScopes(t *testing.T) {
+func Test_resolveKeywordedScopes(t *testing.T) {
 	tests := []struct {
 		name    string
 		u       *models.SignedInUser
@@ -50,7 +50,7 @@ func Test_resolveScopes(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resolved, err := resolveScopes(tt.u, tt.scopes)
+			resolved, err := resolveKeywordedScopes(tt.u, tt.scopes)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
@@ -62,7 +62,7 @@ func Test_resolveScopes(t *testing.T) {
 	}
 }
 
-func TestResolveGroupedPermissions(t *testing.T) {
+func TestResolvePermissionsKeywordedScopes(t *testing.T) {
 	tests := []struct {
 		name        string
 		u           *models.SignedInUser
@@ -134,7 +134,7 @@ func TestResolveGroupedPermissions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resolved, err := ResolveGroupedPermissions(tt.u, tt.permissions)
+			resolved, err := ResolvePermissionsKeywordedScopes(tt.u, tt.permissions)
 			if tt.wantErr {
 				require.Error(t, err, "expected an error during the grouped permissions resolution")
 				return
