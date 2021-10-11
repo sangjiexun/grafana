@@ -26,7 +26,7 @@ func ResolveKeywordScope(user *models.SignedInUser, permission Permission) (*Per
 	if fn, ok := keywordScopeResolutions[permission.Scope]; ok {
 		resolvedScope, err := fn(user)
 		if err != nil {
-			return nil, fmt.Errorf("Could not resolve %v: %v", permission.Scope, err)
+			return nil, fmt.Errorf("could not resolve %v: %v", permission.Scope, err)
 		}
 		permission.Scope = resolvedScope
 	}
