@@ -139,7 +139,7 @@ func TestResolvePermissionsKeywordedScopes(t *testing.T) {
 				require.Error(t, err, "expected an error during the grouped permissions resolution")
 				return
 			}
-			require.NoError(t, err, "expected an error during the grouped permissions resolution")
+			require.NoError(t, err, "did not expect an error during the grouped permissions resolution")
 
 			assert.EqualValues(t, resolved, tt.want, "resolution of grouped permissions did not end with expected result")
 		})
