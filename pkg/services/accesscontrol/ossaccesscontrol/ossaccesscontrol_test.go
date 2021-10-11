@@ -490,3 +490,93 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 		})
 	}
 }
+
+func TestOSSAccessControlService_ScopeResolution(t *testing.T) {
+	testUser := &models.SignedInUser{
+		UserId:  2,
+		OrgId:   3,
+		OrgName: "TestOrg",
+		OrgRole: models.ROLE_VIEWER,
+		Login:   "testUser",
+		Name:    "Test User",
+		Email:   "testuser@example.org",
+	}
+	registration := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Version:     1,
+			UID:         "fixed:test:test",
+			Name:        "fixed:test:test",
+			Description: "Test role",
+			Permissions: []accesscontrol.Permission{},
+		},
+		Grants: []string{"Viewer"},
+	}
+	tests := []struct {
+		name     string
+		user     *models.SignedInUser
+		rawPerm  accesscontrol.Permission
+		wantPerm accesscontrol.Permission
+		wantErr  bool
+	}{
+		{
+			name:     "Translate orgs:current",
+			user:     testUser,
+			rawPerm:  accesscontrol.Permission{Action: "orgs:read", Scope: "orgs:current"},
+			wantPerm: accesscontrol.Permission{Action: "orgs:read", Scope: "orgs:3"},
+			wantErr:  false,
+		},
+		{
+			name:     "Translate users:self",
+			user:     testUser,
+			rawPerm:  accesscontrol.Permission{Action: "users:read", Scope: "users:self"},
+			wantPerm: accesscontrol.Permission{Action: "users:read", Scope: "users:2"},
+			wantErr:  false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Remove any inserted role after the test case has been run
+			t.Cleanup(func() {
+				removeRoleHelper(registration.Role.Name)
+			})
+
+			// Setup
+			ac := &OSSAccessControlService{
+				Cfg:           setting.NewCfg(),
+				UsageStats:    &usagestats.UsageStatsMock{T: t},
+				Log:           log.New("accesscontrol-test"),
+				registrations: accesscontrol.RegistrationList{},
+			}
+			ac.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
+
+			registration.Role.Permissions = []accesscontrol.Permission{tt.rawPerm}
+			err := ac.DeclareFixedRoles(registration)
+			require.NoError(t, err)
+
+			err = ac.RegisterFixedRoles()
+			require.NoError(t, err)
+
+			// Test
+			userPerms, err := ac.GetUserPermissions(context.TODO(), tt.user)
+			if tt.wantErr {
+				assert.Error(t, err, "Expected an error with GetUserPermissions.")
+			}
+			assert.NoError(t, err, "Did not expect an error with GetUserPermissions.")
+
+			foundTranslation := false
+			foundRaw := false
+			for _, p := range userPerms {
+				if p.Action == tt.wantPerm.Action && p.Scope == tt.wantPerm.Scope {
+					foundTranslation = true
+					break
+				}
+				if p.Action == tt.rawPerm.Action && p.Scope == tt.rawPerm.Scope {
+					foundRaw = true
+					break
+				}
+			}
+			assert.False(t, foundRaw, "Expected resolution of raw permission")
+			assert.True(t, foundTranslation, "Expected resolution of raw permission")
+		})
+	}
+}
