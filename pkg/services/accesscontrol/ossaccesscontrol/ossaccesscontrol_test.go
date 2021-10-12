@@ -570,7 +570,7 @@ func TestOSSAccessControlService_ScopeResolution(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err, "Expected an error with GetUserPermissions.")
 			}
-			assert.NoError(t, err, "Did not expect an error with GetUserPermissions.")
+			require.NoError(t, err, "Did not expect an error with GetUserPermissions.")
 
 			rawUserPerms := extractRawPermissionsHelper(userPerms)
 
