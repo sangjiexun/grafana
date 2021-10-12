@@ -569,6 +569,7 @@ func TestOSSAccessControlService_ScopeResolution(t *testing.T) {
 			userPerms, err := ac.GetUserPermissions(context.TODO(), tt.user)
 			if tt.wantErr {
 				assert.Error(t, err, "Expected an error with GetUserPermissions.")
+				return
 			}
 			require.NoError(t, err, "Did not expect an error with GetUserPermissions.")
 
