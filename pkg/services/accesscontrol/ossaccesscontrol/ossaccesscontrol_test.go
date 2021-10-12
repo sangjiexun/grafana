@@ -45,6 +45,15 @@ func removeRoleHelper(role string) {
 	}
 }
 
+// extractRawPermissions extracts action and scope fields only from a permission slice
+func extractRawPermissionsHelper(perms []*accesscontrol.Permission) []*accesscontrol.Permission {
+	res := make([]*accesscontrol.Permission, len(perms))
+	for i, p := range perms {
+		res[i] = &accesscontrol.Permission{Action: p.Action, Scope: p.Scope}
+	}
+	return res
+}
+
 type evaluatingPermissionsTestCase struct {
 	desc       string
 	user       userTestCase
@@ -563,20 +572,10 @@ func TestOSSAccessControlService_ScopeResolution(t *testing.T) {
 			}
 			assert.NoError(t, err, "Did not expect an error with GetUserPermissions.")
 
-			foundTranslation := false
-			foundRaw := false
-			for _, p := range userPerms {
-				if p.Action == tt.wantPerm.Action && p.Scope == tt.wantPerm.Scope {
-					foundTranslation = true
-					break
-				}
-				if p.Action == tt.rawPerm.Action && p.Scope == tt.rawPerm.Scope {
-					foundRaw = true
-					break
-				}
-			}
-			assert.False(t, foundRaw, "Expected resolution of raw permission")
-			assert.True(t, foundTranslation, "Expected resolution of raw permission")
+			rawUserPerms := extractRawPermissionsHelper(userPerms)
+
+			assert.Contains(t, rawUserPerms, &tt.wantPerm, "Expected resolution of raw permission")
+			assert.NotContains(t, rawUserPerms, &tt.rawPerm, "Expected raw permission to have been resolved")
 		})
 	}
 }
