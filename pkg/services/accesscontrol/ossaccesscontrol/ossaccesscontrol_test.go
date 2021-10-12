@@ -531,14 +531,14 @@ func TestOSSAccessControlService_ScopeResolution(t *testing.T) {
 			name:     "Translate orgs:current",
 			user:     testUser,
 			rawPerm:  accesscontrol.Permission{Action: "orgs:read", Scope: "orgs:current"},
-			wantPerm: accesscontrol.Permission{Action: "orgs:read", Scope: "orgs:3"},
+			wantPerm: accesscontrol.Permission{Action: "orgs:read", Scope: "orgs:id:3"},
 			wantErr:  false,
 		},
 		{
 			name:     "Translate users:self",
 			user:     testUser,
 			rawPerm:  accesscontrol.Permission{Action: "users:read", Scope: "users:self"},
-			wantPerm: accesscontrol.Permission{Action: "users:read", Scope: "users:2"},
+			wantPerm: accesscontrol.Permission{Action: "users:read", Scope: "users:id:2"},
 			wantErr:  false,
 		},
 	}
